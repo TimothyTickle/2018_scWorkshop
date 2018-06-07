@@ -1,0 +1,121 @@
+---
+title: "Quality control metrics (10X 2.7K PBMCs)"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Goal
+
+- To introduce you to the Seurat analysis environment.
+- To give you some experience with quality control and how it is used in scRNA-Seq.
+
+## Introduction
+
+The literature points to scRNA-Seq having interesting characteristic. Although, not fully characterized, two of the characteristics that are important to keep in mind when working with scRNA-Seq is Drop-out and the potential for QC metrics to be confounded with biology. This combined with the ability to see more heterogeniety from cells in samples (than traditional population-based methods) has shifted the field away from, at the time established analysis patterns in population-based RNA-Seq. Here we talk through some approaches initial approaches to quality control metrics.
+
+For this tutorial, we will be analyzing the a dataset of Peripheral Blood Mononuclear Cells (PBMC) freely available from 10X Genomics, using the Seurat R package (http://satijalab.org/seurat/), a popular and powerful set of tools to conduct scRNA-seq analysis in R. In this dataset, there are 2,700 single cells that were sequenced on the Illumina NextSeq 500. 
+
+```{r global_options, echo=FALSE}
+knitr::opts_chunk$set(cache=TRUE)
+knitr::opts_chunk$set(tidy.opts=list(width.cutoff=80))
+```
+
+## Read the count matrix and setup the Seurat object
+
+Load necessary packages
+
+```{r, warning=FALSE, message=FALSE}
+library(Seurat)
+library(dplyr)
+library(Matrix)
+source("utilities.R")
+```
+
+To preprocess their data, 10X genomics provides a software called `cellranger`. `cellranger` aligns the raw reads and generates count matrices. Seurat's `Read10X` function reads these count matrices in the format that 10X provides.
+
+
+```{r, cache.lazy=FALSE, tidy=TRUE,  tidy.opts=list(width.cutoff=80)}
+# Load the PBMC dataset
+pbmc.data <- Read10X(data.dir = "filtered_gene_bc_matrices/hg19/")
+
+# Examine the memory savings between regular and sparse matrices
+dense.size <- object.size(x = as.matrix(x = pbmc.data))
+dense.size
+```
+
+Seurat stores the count matrix in the sparse format. For matrices where a majority of the entries are zero, which is generally the case for scRNA-seq data (remember dropouts?), it is far more memory efficient to only remember the non-zero entries of the matrix, rather than the entire matrix (which is mostly zeros). This is essentially the basis of the sparse representation, a format that is supported by all programming languages. Notice below how much memory we save due to the sparse format.
+
+
+```{r, cache.lazy=FALSE}
+sparse.size <- object.size(x = pbmc.data)
+sparse.size
+```
+
+```{r, cache.lazy=FALSE}
+dense.size/sparse.size
+```
+As is the case in a general R workflow, we center all our analysis on a single "object", in this case an object of the class Seurat that we will call `pbmc`. This object will contain various "slots" that will store not only the raw input data, but also the results from various computations below. This has the advantage that we do not need to keep track of inidividual variables of interest - they can all be collapsed into a single object as long as these slots are pre-defined.
+
+```{r, cache.lazy=FALSE}
+# Initialize the Seurat object with the raw (non-normalized data).  Keep all
+# genes expressed in >= 3 cells (~0.1% of the data). Keep all cells with at
+# least 200 detected genes
+pbmc <- CreateSeuratObject(raw.data = pbmc.data, min.cells = 3, min.genes = 200,
+                           project = "10X_PBMC")
+```
+
+`pbmc@raw.data` is a slot that stores the original gene expression matrix. We can visualize the first 20 rows (genes) and the first 10 columns (cells),
+```{r, cache.lazy=FALSE}
+pbmc@raw.data[1:20,1:10]
+```
+
+## Preprocessing step 1 : Filter out unhealthy cells
+
+The object initialization step above only considered cells that express at least 200 genes. Additionally, we would like to exclude cells that are unhealthy. A common metric to judge this (although by no means the only one ) is the relative expression of mitochondrially derived genes. When the cells apoptose due to stress, their mitochondria becomes leaky and there is widespread RNA-degradation. Thus a relative enrichment of mitochondrially derived genes can be a tell-tale sign of cell stress. Here, we compute the proportion of transcripts that are of mitochondrial origin for every cell (`percent.mito`), and visualize its distribution as a violin plot. We also use the `GenePlot` function to observe how `percent.mito` correlates with other metrics
+
+```{r, cache.lazy=FALSE, tidy=TRUE, tidy.opts=list(width.cutoff=120), fig.width= 12, fig.height=6.5}
+# The number of genes and UMIs (nGene and nUMI) are automatically calculated
+# for every object by Seurat.  For non-UMI data, nUMI represents the sum of
+# the non-normalized values within a cell We calculate the percentage of
+# mitochondrial genes here and store it in percent.mito using AddMetaData.
+# We use object@raw.data since this represents non-transformed and
+# non-log-normalized counts The % of UMI mapping to MT-genes is a common
+# scRNA-seq QC metric.
+mito.genes <- grep(pattern = "^MT-", x = rownames(x = pbmc@data), value = TRUE)
+percent.mito <- Matrix::colSums(pbmc@raw.data[mito.genes, ])/Matrix::colSums(pbmc@raw.data)
+
+# AddMetaData adds columns to object@meta.data, and is a great place to
+# stash QC stats
+pbmc <- AddMetaData(object = pbmc, metadata = percent.mito, col.name = "percent.mito")
+VlnPlot(object = pbmc, features.plot = c("nGene", "nUMI", "percent.mito"), nCol = 3)
+
+# GenePlot is typically used to visualize gene-gene relationships, but can
+# be used for anything calculated by the object, i.e. columns in
+# object@meta.data, PC scores etc.  Since there is a rare subset of cells
+# with an outlier level of high mitochondrial percentage and also low UMI
+# content, we filter these as well
+par(mfrow = c(1, 2))
+GenePlot(object = pbmc, gene1 = "nUMI", gene2 = "percent.mito")
+GenePlot(object = pbmc, gene1 = "nUMI", gene2 = "nGene")
+```
+
+```{r, cache.lazy=FALSE}
+# We filter out cells that have unique gene counts over 2,500 or less than
+# 200 Note that low.thresholds and high.thresholds are used to define a
+# 'gate' -Inf and Inf should be used if you don't want a lower or upper
+# threshold.
+pbmc <- FilterCells(object = pbmc, subset.names = c("nGene", "percent.mito"),
+    low.thresholds = c(200, -Inf), high.thresholds = c(2500, 0.05))
+
+## Preprocessing step 2 : Expression normalization
+
+After removing unwanted cells from the dataset, the next step is to normalize the data. By default, Seurat a global-scaling normalization method “LogNormalize” that normalizes the gene expression measurements for each cell by the total expression, multiplies this by a scale factor (10,000 by default), and log-transforms the result. There have been many methods to normalize the data, but this is the simplest and the most intuitive. The division by total expression is done to change all expression counts to a relative measure, since experience has suggested that technical factors (e.g. capture rate, efficiency of RT) are largely responsible for the variation in the number of molecules per cell, although genuine biological factors (e.g. cell cycle stage, cell size) also play a smaller, but non-negligible role. The log-transformation is a commonly used transformation that has many desirable properties, such as variance stabilization (can you think of others?).
+
+For a recent review on scRNA-seq normalization, see Vallejos et al., _Nature Methods_, 2017.
+
+```{r, cache.lazy=FALSE}
+pbmc <- NormalizeData(object = pbmc, normalization.method = "LogNormalize",
+                      scale.factor = 10000)

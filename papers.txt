@@ -1,0 +1,6 @@
+QC metrics
+Seurat paper.
+
+Integrating Data set
+Seurat CCA
+https://www.nature.com/articles/nbt.4096

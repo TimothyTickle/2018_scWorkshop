@@ -1,0 +1,559 @@
+Crashing into the R Language
+========================================================
+author: Timothy Tickle
+date: June 2018
+
+What is RStudio?
+========================================================
+
+- IDE Interactive Development Environment
+- Console + Help + Figures + Project Management
+- Using it now
+
+Crunching the Numbers
+========================================================
+
+- 5 + 2
+- 5 - 2
+- 5 * 2
+- 5 / 2
+- 5 ^ 2
+- 5 ** 2
+- 5 %% 2
+- 5 %/% 2
+
+***
+
+- addition
+- subtraction
+- multiplication
+- division
+- exponentiation
+- exponentiation
+- modulus ( remainder )
+- integer division (divisor )
+
+Try it yourself
+========================================================
+
+- 1. 5 times 4 __then__ times 2
+- 1. 5 plus 7 __then__ divided by 2
+- 1. 4 minus 2 __then__ to the power of 1.5
+- 1. 5 plus 5 __then__ modulus 5
+
+![Question Cat](/Users/ttickle/Desktop/2018_scWorkshop/pictures/question_cat.png)
+
+Adding Logic to Your Code
+========================================================
+
+- 5 < x
+- 5 <= x
+- 5 > x
+- 5 >= x
+- 5 == x
+- 5 != x
+- !x
+- True || False
+- True && False
+- isTrue( x )
+
+***
+
+- less than
+- less than or equal to
+- greater than
+- greater than or equal to
+- equal to
+- not equal to
+- Logical NOT
+- Logical OR
+- Logical AND
+- Test for True
+
+Storing Data
+========================================================
+
+The rules:
+- Letters, numbers, dots, underscores
+- Must start with a letter or a dot not followed by a number
+- No reserve words, No spaces
+
+```{r}
+x <- 5
+x * 2
+```
+
+Storing Data
+========================================================
+
+The rules:
+- Letters, numbers, dots, underscores
+- Must start with a letter or a dot not followed by a number
+- No reserve words, No spaces
+
+```{r}
+x <- 2
+x <- x + 1
+y <- 4
+x * y
+```
+
+Basic Data Types
+========================================================
+
+- integer
+- numeric
+- character (Strings)
+- logical
+- factor
+- ordered factor
+- Missing Values and others
+
+***
+
+- 1
+- 1.0
+- "hello"   'hello'  "a"    'a'
+- TRUE FALSE
+- factor("GroupOne")
+- factor( c("d","o","g"), ordered = TRUE)
+- NA, NaN, -Inf, Inf
+
+Functions
+========================================================
+
+Is a block of code that preforms a defined task.  
+Functions are referred to by a name.  
+They may take inputs and may return an output.  
+
+```{r,eval=FALSE}
+print()  
+```
+"print": This is the name  
+"()": Lets us know it is a function  
+
+```{r,eval=FALSE} 
+?print  
+print(x="A")   
+print("A")  
+print(x="A", quote=FALSE)  
+```
+
+
+Group Similar Data with Vectors
+========================================================
+
+Vector - Single collection of the same data mode
+
+```{r}
+c(1,2,3,4,5,6,7)
+5:9
+9:1
+```
+
+Character Vectors
+========================================================
+
+```{r}
+c( "a", "a", "a", "a", "a" )
+rep( "a", 5 )
+c( "Cats","are","amazing" )
+```
+
+Logical Vectors
+========================================================
+
+```{r}
+c( TRUE, FALSE, TRUE, TRUE, FALSE )
+```
+
+Factor Vector
+========================================================
+
+```{r}
+factor( c( "Cats","are","still", "amazing" ) )
+factor( c( "Cats","are", "are", "still", "amazing", "amazing", "amazing" ) )
+```
+
+Vectors Must Be of One Data Mode
+========================================================
+
+```{r}
+c( 1, "2", FALSE)
+c( 1, FALSE )
+```
+
+Vectors Must Be of One Data Mode
+========================================================
+
+!["Confused Cat"](cats/surprised_cat_3.png)
+
+Selecting Vector Elements
+========================================================
+
+- One element
+```{r}
+x <- 1:4
+x[ 2 ]
+```
+- A slice of a vector
+```{r}
+x <- 1:10
+x[ 4:7 ]
+```
+Selecting Vector Elements
+========================================================
+
+- Multiple elements ( not contiguous )
+```{r}
+x <- c( "a", "b", "c", "d", "e", "f" )
+x[ c(5,3,1) ]
+```
+
+Selecting Vector Elements
+========================================================
+
+- Using logical vector
+```{r}
+x <- 1:10
+x%%2
+x%%2 == 0
+x[x%%2 == 0]
+```
+
+Removing elements
+========================================================
+
+```{r}
+x <- 5:1
+x
+x[ -1 ]
+```
+
+
+2-Dimensional Vectors are Matrices
+========================================================
+
+```{r}
+matrix( 1:20, nrow = 5, ncol = 4 )
+```
+
+Indexing Matrices
+========================================================
+
+- matrix[ r, c ]
+```{r}
+boring.matrix = matrix( 1:20, nrow = 5, ncol = 4 )
+dim( boring.matrix )
+```
+
+Indexing Matrices
+========================================================
+
+- matrix[ r, c ]
+```{r}
+boring.matrix[ ,1 ]
+boring.matrix[ 2, ]
+```
+
+Indexing Matrices
+========================================================
+
+- matrix[ r, c ]
+```{r}
+boring.matrix[ 2, 1 ]
+```
+
+Indexing Matrices
+========================================================
+
+- matrix[ r, c ]
+```{r}
+boring.matrix
+boring.matrix[ 2, 1 ]
+```
+
+Matrix Operations
+========================================================
+
+- Transpose
+```{r}
+boring.matrix <- matrix(1:9, nrow = 3)
+boring.matrix
+t(boring.matrix)
+```
+
+Matrix Operations
+========================================================
+
+- Adding
+```{r,echo=TRUE}
+boring.matrix
+boring.matrix + 1
+```
+
+Matrix Operations
+========================================================
+
+- Adding
+```{r,echo=TRUE}
+boring.matrix
+boring.matrix + boring.matrix
+```
+
+Matrix Operations
+========================================================
+
+- Multiplying
+```{r,echo=TRUE}
+boring.matrix
+boring.matrix * 2
+```
+
+Matrix Operations
+========================================================
+
+- Multiplying
+```{r,echo=TRUE}
+boring.matrix
+boring.matrix * boring.matrix
+```
+
+Matrix Operations
+========================================================
+
+- Linear Algebra
+```{r}
+boring.matrix
+boring.matrix %*% boring.matrix
+```
+
+Naming Matrices
+========================================================
+
+```{r}
+colnames( boring.matrix ) <- c( "col.1","col.2","col.3" )
+rownames( boring.matrix ) <- c( "row.1", "row.2", "row.3" )
+boring.matrix
+boring.matrix["row.1",]
+```
+
+Data Frames are Matrices of Multiple Data Types
+========================================================
+
+```{r, echo=TRUE}
+x <- 11:16
+y <- seq(0,1,.2)
+z <- c( "one", "two", "three", "four", "five", "six" )
+a <- factor( z )
+```
+
+Data Frames are Matrices of Multiple Data Types
+========================================================
+
+```{r, echo=TRUE}
+test.dataframe <- data.frame(x,y,z,a)
+test.dataframe
+```
+
+Data Frames are Column Major
+========================================================
+
+```{r}
+test.dataframe[3]
+```
+
+Data Frames are Column Major
+========================================================
+
+```{r}
+test.dataframe
+test.dataframe[[3]]
+```
+
+Updating Data Frames
+========================================================
+
+```{r}
+test.dataframe[[1]] <- 21:26
+test.dataframe
+```
+
+Updating Data Frames
+========================================================
+
+```{r}
+test.dataframe[[3,1]] <- 111
+test.dataframe
+```
+
+A Data Object for Every Occasion
+========================================================
+
+What data type would you use?
+- Basic Data Type
+- Vector
+- Matrix
+- Data Frame
+
+Data Structures the Others
+========================================================
+
+Oops, I may have missed somethings...
+- List
+- Named Vectors
+- Table
+- Raw
+- S3 objects
+- S4 objects
+
+Data Structures the Others
+========================================================
+
+![](cats/surprised_cat-2.jpg)
+
+Simple Plots
+========================================================
+
+Plotting is easy!
+
+```{r, eval=FALSE}
+x <- 1:10
+y <- log ( x )
+plot( x, y )
+```
+
+Simple Plots
+========================================================
+
+Plotting is easy!
+
+```{r, echo=FALSE}
+x <- 1:10
+y <- log ( x )
+plot( x, y )
+```
+
+Simple Plots
+========================================================
+
+Plotting can be complicated!
+
+```{r}
+x <- seq(0,3,.1)
+x
+y <- tan(x)
+```
+
+Simple Plots
+========================================================
+
+Plotting can be complicated!
+
+```{r, eval=FALSE}
+plot( x, y, xlab = "X axis", ylab = "Y lab", main = "You this is cool", cex = 2.0, pch = '*', col = "red" )
+```
+
+Simple Plots
+========================================================
+
+Plotting can be complicated!
+
+```{r, echo=FALSE}
+plot( x, y, xlab = "X axis", ylab = "Y lab", main = "You this is cool", cex = 2.0, pch = '*', col = "red" )
+```
+
+Simple Plots
+========================================================
+
+Plotting is consistently complicated!
+
+```{r, eval=FALSE}
+x <- 1:100
+y <- x + 200
+boxplot( x, y, xlab = "X axis", ylab = "Y lab", main = "You this is cool", cex = 2.0, pch = '*', col = "red" )
+```
+
+Simple Plots
+========================================================
+
+Plotting is consistently complicated!
+
+```{r, echo=FALSE}
+x <- 1:100
+y <- x + 200
+boxplot( x, y, xlab = "X axis", ylab = "Y lab", main = "You this is cool", cex = 2.0, pch = '*', col = "red" )
+```
+
+Other Plotting Paradigms
+========================================================
+
+- ggplots
+
+
+=======================================================
+
+![Questions](cats/professor_cat.jpg)
+
+Reading Tables
+========================================================
+
+- read.table
+- read.csv
+- read.delim
+
+```{r}
+new.df <- read.table( "data/super_fun.txt" )
+dim( new.df )
+head( new.df )
+```
+
+Reading Tables
+========================================================
+
+```{r}
+new.df <- read.table( "data/not_so_fun.txt" )
+dim( new.df )
+head( new.df )
+```
+
+Reading Tables
+=========================================================
+
+![Surprised Cat](cats/surprised_cat.jpg)
+
+Writing Tables
+========================================================
+
+- write.table
+- write.csv
+
+```{r}
+write.table( boring.matrix, "data/boring_matrix.txt")
+write.csv( test.dataframe, "data/test_dataframe.csv", quote=FALSE)
+```
+
+Using People's Work
+=======================================================
+
+```{r}
+? "dplyr"
+library(dplyr)
+? "dplyr"
+```
+
+Getting Help
+========================================================
+
+- ? mean
+- help.search( "mean" )
+- find( "lowess")
+- apropos( "lm" )
+- CRAN
+- Vignettes
+- Manuals
+
+Questions?
+========================================================
+
+!["win"](cats/win_cat.jpg)

@@ -41,7 +41,7 @@ Try it yourself
 - 1. 4 minus 2 __then__ to the power of 1.5
 - 1. 5 plus 5 __then__ modulus 5
 
-![Question Cat](/Users/ttickle/Desktop/2018_scWorkshop/pictures/question_cat.png)
+![Question Cat](question_cat.png)
 
 Adding Logic to Your Code
 ========================================================
@@ -186,7 +186,7 @@ c( 1, FALSE )
 Vectors Must Be of One Data Mode
 ========================================================
 
-!["Confused Cat"](cats/surprised_cat_3.png)
+!["Confused Cat"](surprised_cat_3.png)
 
 Selecting Vector Elements
 ========================================================
@@ -410,7 +410,7 @@ Oops, I may have missed somethings...
 Data Structures the Others
 ========================================================
 
-![](cats/surprised_cat-2.jpg)
+![](surprised_cat-2.jpg)
 
 Simple Plots
 ========================================================
@@ -493,7 +493,7 @@ Other Plotting Paradigms
 
 =======================================================
 
-![Questions](cats/professor_cat.jpg)
+![Questions](professor_cat.jpg)
 
 Reading Tables
 ========================================================
@@ -503,7 +503,7 @@ Reading Tables
 - read.delim
 
 ```{r}
-new.df <- read.table( "data/super_fun.txt" )
+new.df <- read.table( "super_fun.txt" )
 dim( new.df )
 head( new.df )
 ```
@@ -512,7 +512,7 @@ Reading Tables
 ========================================================
 
 ```{r}
-new.df <- read.table( "data/not_so_fun.txt" )
+new.df <- read.table( "not_so_fun.txt" )
 dim( new.df )
 head( new.df )
 ```
@@ -520,7 +520,7 @@ head( new.df )
 Reading Tables
 =========================================================
 
-![Surprised Cat](cats/surprised_cat.jpg)
+![Surprised Cat](surprised_cat.jpg)
 
 Writing Tables
 ========================================================
@@ -529,9 +529,25 @@ Writing Tables
 - write.csv
 
 ```{r}
-write.table( boring.matrix, "data/boring_matrix.txt")
-write.csv( test.dataframe, "data/test_dataframe.csv", quote=FALSE)
+write.table( boring.matrix, "boring_matrix.txt")
+write.csv( test.dataframe, "test_dataframe.csv", quote=FALSE)
 ```
+
+Saving RData
+=======================================================
+
+```{r}
+save(boring.matrix,file="boring_matrix.RData")
+# save.image()
+```
+
+Loading RData
+=======================================================
+
+```{r}
+load("boring_matrix.RData")
+```
+
 
 Using People's Work
 =======================================================
@@ -556,4 +572,4 @@ Getting Help
 Questions?
 ========================================================
 
-!["win"](cats/win_cat.jpg)
+!["win"](win_cat.jpg)

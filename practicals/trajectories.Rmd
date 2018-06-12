@@ -1,0 +1,25 @@
+---
+title: "Trajectories"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Goal
+
+- To give you some experience with methodology focused on interpreting changes in cells as trajectories.
+- To introduce you to the Monocle R library.
+
+## Introduction
+
+
+
+
+
+
+
+## Sources
+
+This tutorial is ***strongly*** influenced by Monocle's Tutorials, and so we give them the credit for this tutorial. Explore Monocle here: http://cole-trapnell-lab.github.io/monocle-release/tutorials

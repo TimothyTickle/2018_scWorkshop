@@ -9,8 +9,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Goal
 
-- To introduce you to the Seurat analysis environment.
 - To give you some experience with quality control and how it is used in scRNA-Seq.
+- To introduce you to the Seurat analysis environment.
 
 ## Introduction
 
@@ -23,8 +23,6 @@ knitr::opts_chunk$set(cache=TRUE)
 knitr::opts_chunk$set(tidy.opts=list(width.cutoff=80))
 ```
 
-## Read the count matrix and setup the Seurat object
-
 Load necessary packages
 
 ```{r, warning=FALSE, message=FALSE}
@@ -34,6 +32,168 @@ library(Matrix)
 source("utilities.R")
 ```
 
+# **  human peripheral blood mononuclear cells from: https://support.10xgenomics.com/single-cell-gene-expression/datasets
+counts_matrix_filename = "data/pbmcs/pbmc3k.counts.matrix.gz"; org="human"
+
+```
+
+##############################
+# Data preparation
+##############################
+
+```{r}
+# Read data from your file, rows as genes colums as cells
+myCountMatrix <- read.table(gzfile(counts_matrix_filename), header=T, row.names=1)
+```
+
+Look at the matrix:
+```{r}
+myCountMatrix[1:10, 1:3]
+```
+
+How big is the matrix?
+
+```{r}
+dim(myCountMatrix) # report num rows and cols
+```
+
+Size in bytes?
+```{r}
+object.size(myCountMatrix)
+```
+
+Convert the matrix to a sparse matrix
+```{r}
+myCountMatrixSparse <- Matrix(as.matrix(myCountMatrix), sparse = T)
+
+# take a look at it:
+myCountMatrixSparse[1:10,1:3]
+```
+
+```{r}
+# check dimensions:
+dim(myCountMatrixSparse)
+
+# check size:
+object.size(myCountMatrixSparse)
+
+# size reduction:
+object.size(myCountMatrixSparse) / object.size(myCountMatrix)
+
+```
+
+```{r}
+# Remove the original matrix to reduce memory usage
+rm(myCountMatrix)
+myCountMatrixSparse.prefiltered = myCountMatrixSparse # store just in case
+```
+
+## Filtering 'bad' cells
+
+Look at the summary counts
+
+```{r}
+#par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0)
+
+reads_per_cell = Matrix::colSums(myCountMatrixSparse)
+reads_per_gene = Matrix::rowSums(myCountMatrixSparse)
+genes_per_cell = Matrix::colSums(myCountMatrixSparse>0) # count gene only if it has non-zero reads mapped.
+cells_per_gene = Matrix::rowSums(myCountMatrixSparse>0) # only count cells where the gene is expressed
+
+hist(log10(reads_per_cell+1),main='reads per cell',col='wheat')
+hist(log10(genes_per_cell+1), main='genes per cell', col='wheat')
+plot(reads_per_cell, genes_per_cell, log='xy', col='wheat')
+hist(log10(reads_per_gene+1),main='reads per gene',col='wheat')
+```
+
+### Plot genes per cell with cells ranked accordingly.
+
+```{r}
+plot(sort(genes_per_cell), xlab='cell', log='y', main='genes per cell (ordered)')
+
+```
+
+### Cell filtering criteria:  define min and max genes per cell
+
+```{r}
+#  set upper and lower thresholds for genes per cell:
+MIN_GENES_PER_CELL = 350  ## user-defined setting
+MAX_GENES_PER_CELL = 1800  ## user-defined setting
+
+# now replot with the thresholds being shown:
+plot(sort(genes_per_cell), xlab='cell', log='y', main='genes per cell (ordered)')
+abline(h=MIN_GENES_PER_CELL, col='green')  # lower threshold
+abline(h=MAX_GENES_PER_CELL, col='green') # upper threshold
+```
+
+### Examine percent mitochondrial read content
+
+```{r}
+# define the mitochondrial genes
+mito_genes = grep("^mt-", rownames(myCountMatrixSparse) , ignore.case=T, value=T)
+print(mito_genes)
+```
+
+```{r}
+# compute pct mito
+mito_gene_read_counts = Matrix::colSums(myCountMatrixSparse[mito_genes,])
+pct_mito = mito_gene_read_counts / reads_per_cell * 100
+plot(sort(pct_mito))
+```
+
+Decide on maximum allowed percent mitochondrial reads:
+
+```{r}
+MAX_PCT_MITO = 10   ## user-defined setting
+
+plot(sort(pct_mito))
+abline(h=MAX_PCT_MITO, col='red')
+
+```
+
+### Plot gene_per_cell vs. reads_per_cell, define outliers
+
+```{r}
+library(MASS)
+df = df[order(df$reads_per_cell),] # order by reads_per_cell
+plot(df, log='xy')
+m <- rlm(genes_per_cell~reads_per_cell,data=df) # robust linear model, not sens to outliers
+p.level = 1e-3
+# predict genes_per_cell based on observed reads_per_cell
+suppressWarnings(pb <- data.frame(predict(m, interval='prediction', 
+                                          level = 1-p.level, # define conf interval
+                                          type="response")))
+polygon(c(df$reads_per_cell, rev(df$reads_per_cell)),
+        c(pb$lwr, rev(pb$upr)), col=adjustcolor(2,alpha=0.1), border = NA)
+
+# identifier outliers as having observed genes_per_cell outside the prediction confidence interval
+outliers <- rownames(df)[df$genes_per_cell > pb$upr | df$genes_per_cell < pb$lwr];
+points(df[outliers,],col=2,cex=0.6)
+```
+
+###############################################################
+# prune cells
+valid_cells = colnames(myCountMatrixSparse) # all cells
+message('starting with: ', length(valid_cells), ' cells') # number starting with
+
+## remove cells based on gene count criteria:
+valid_cells = valid_cells[genes_per_cell >= MIN_GENES_PER_CELL & genes_per_cell <= MAX_GENES_PER_CELL]  # set values based on your evaluation above
+message('after filtering low and high gene count outliers: ', length(valid_cells), ' cells') # number after filtering based gene count thresholds
+
+## remove cells having excessive mito read content
+valid_cells = valid_cells[valid_cells %in% names(pct_mito)[pct_mito <= MAX_PCT_MITO]]
+message('after removing high-mito cells: ', length(valid_cells), ' cells') # number remaining after high-mito cells removed
+
+## remove cells identified as outliers via the Karchenko method
+valid_cells = valid_cells[ ! valid_cells %in% outliers]
+message('after removing final outliers: ', length(valid_cells), ' cells') # number surviving outlier detection
+
+## update the count matrix to contain only the valid cells
+myCountMatrixSparse = myCountMatrixSparse[,valid_cells]
+```
+
+
+-----------
 To preprocess their data, 10X genomics provides a software called `cellranger`. `cellranger` aligns the raw reads and generates count matrices. Seurat's `Read10X` function reads these count matrices in the format that 10X provides.
 
 
@@ -119,3 +279,9 @@ For a recent review on scRNA-seq normalization, see Vallejos et al., _Nature Met
 ```{r, cache.lazy=FALSE}
 pbmc <- NormalizeData(object = pbmc, normalization.method = "LogNormalize",
                       scale.factor = 10000)
+
+## Sources
+
+This practical is derived from the following resources, please visit them for updates and more details.
+
+1. Seurat2:  http://satijalab.org/seurat

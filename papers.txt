@@ -1,6 +1,14 @@
 QC metrics
 Seurat paper.
 
+SCDE
+Karchenko et al. Bayesian approach to single-cell differential expression analysis
+https://www.nature.com/articles/nmeth.2967
+
+Gene set
+Fan et Al. Characterizing transcriptional heterogeneity through pathway and gene set overdispersion analysis
+https://www.nature.com/articles/nmeth.3734
+
 Integrating Data set
 Seurat CCA
 https://www.nature.com/articles/nbt.4096

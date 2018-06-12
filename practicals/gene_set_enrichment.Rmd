@@ -1,0 +1,97 @@
+---
+title: "Gene Set Enrichment"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Goal
+
+- To give you some experience with methodology focused on interpreting changes in cells as trajectories.
+- To introduce you to the Pagoda2 (SCDE) R library.
+
+## Introduction
+
+```{r}
+## Load precomputed data and clean.
+data(pollen)
+# remove poor cells and genes
+cd <- clean.counts(pollen)
+# check the final dimensions of the read count matrix
+dim(cd)
+
+## Update labels
+x <- gsub("^Hi_(.*)_.*", "\\1", colnames(cd))
+l2cols <- c("coral4", "olivedrab3", "skyblue2", "slateblue3")[as.integer(factor(x, levels = c("NPC", "GW16", "GW21", "GW21+3")))]
+
+## Fitting error models
+## EVALUATION NOT NEEDED
+# knn <- knn.error.models(cd, k = ncol(cd)/4, n.cores = 1, min.count.threshold = 2, min.nonfailed = 5, max.model.plots = 10)
+data(knn)
+
+## Normalizing data
+varinfo <- pagoda.varnorm(knn, counts = cd, trim = 3/ncol(cd), max.adj.var = 5, n.cores = 1, plot = TRUE)
+
+# list top overdispersed genes
+sort(varinfo$arv, decreasing = TRUE)[1:10]
+
+## Controlling for sequencing depth
+varinfo <- pagoda.subtract.aspect(varinfo, colSums(cd[, rownames(knn)]>0))
+
+## Evaluate overdispersion of predefined genes
+library(org.Hs.eg.db)
+# translate gene names to ids
+ids <- unlist(lapply(mget(rownames(cd), org.Hs.egALIAS2EG, ifnotfound = NA), function(x) x[1]))
+rids <- names(ids); names(rids) <- ids 
+# convert GO lists from ids to gene names
+gos.interest <- unique(c(ls(org.Hs.egGO2ALLEGS)[1:100],"GO:0022008","GO:0048699", "GO:0000280", "GO:0007067")) 
+go.env <- lapply(mget(gos.interest, org.Hs.egGO2ALLEGS), function(x) as.character(na.omit(rids[x]))) 
+go.env <- clean.gos(go.env) # remove GOs with too few or too many genes
+go.env <- list2env(go.env) # convert to an environment
+
+pwpca <- pagoda.pathway.wPCA(varinfo, go.env, n.components = 1, n.cores = 1)
+# Evaluate overdispersion of each gene set
+df <- pagoda.top.aspects(pwpca, return.table = TRUE, plot = TRUE, z.score = 1.96)
+head(df)
+
+## Evalute overdispersion of 'de novo' gene sets
+clpca <- pagoda.gene.clusters(varinfo, trim = 7.1/ncol(varinfo$mat), n.clusters = 50, n.cores = 1, plot = TRUE)
+df <- pagoda.top.aspects(pwpca, clpca, return.table = TRUE, plot = TRUE, z.score = 1.96)
+head(df)
+
+## Visualize significant aspects of heterogenieity
+# get full info on the top aspects
+tam <- pagoda.top.aspects(pwpca, clpca, n.cells = NULL, z.score = qnorm(0.01/2, lower.tail = FALSE))
+# determine overall cell clustering
+hc <- pagoda.cluster.cells(tam, varinfo)
+tamr <- pagoda.reduce.loading.redundancy(tam, pwpca, clpca)
+tamr2 <- pagoda.reduce.redundancy(tamr, distance.threshold = 0.9, plot = TRUE, cell.clustering = hc, labRow = NA, labCol = NA, box = TRUE, margins = c(0.5, 0.5), trim = 0)
+col.cols <- rbind(groups = cutree(hc, 3))
+pagoda.view.aspects(tamr2, cell.clustering = hc, box = TRUE, labCol = NA, margins = c(0.5, 20), col.cols = rbind(l2cols))
+
+## Interactive browser
+# compile a browsable app, showing top three clusters with the top color bar
+app <- make.pagoda.app(tamr2, tam, varinfo, go.env, pwpca, clpca, col.cols = col.cols, cell.clustering = hc, title = "NPCs")
+# show app in the browser (port 1468)
+show.app(app, "pollen", browse = TRUE, port = 1468) 
+
+## Addnig 2D embedding
+library(Rtsne);
+# recalculate clustering distance .. we'll need to specify return.details=T
+cell.clustering <- pagoda.cluster.cells(tam,varinfo,include.aspects=TRUE,verbose=TRUE,return.details=T)
+# fix the seed to ensure reproducible results
+set.seed(0); 
+tSNE.pagoda <- Rtsne(cell.clustering$distance,is_distance=T,initial_dims=100,perplexity=10)
+par(mfrow=c(1,1), mar = c(2.5,2.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);
+plot(tSNE.pagoda$Y,col=adjustcolor(col.cols,alpha=0.5),cex=1,pch=19,xlab="",ylab="")
+
+## bring back interactive browser
+app <- make.pagoda.app(tamr2, tam, varinfo, go.env, pwpca, clpca, col.cols = col.cols, cell.clustering = hc, title = "NPCs", embedding = tSNE.pagoda$Y)
+# show app in the browser (port 1468)
+show.app(app, "pollen", browse = TRUE, port = 1468) 
+
+## Sources
+
+This tutorial is ***strongly*** influenced by Pagoda's Tutorials, and so we give them the credit for this tutorial. Explore Monocle here: http://hms-dbmi.github.io/scde/tutorials.html

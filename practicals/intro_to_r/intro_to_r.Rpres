@@ -46,16 +46,16 @@ Try it yourself
 Adding Logic to Your Code
 ========================================================
 
-- 5 < x
-- 5 <= x
-- 5 > x
-- 5 >= x
-- 5 == x
-- 5 != x
-- !x
-- True || False
-- True && False
-- isTrue( x )
+- 5 < 1
+- 5 <= 1
+- 5 > 1
+- 5 >= 1
+- 5 == 1
+- 5 != 1
+- !FALSE
+- TRUE || FALSE
+- TRUE && FALSE
+- isTRUE( TRUE )
 
 ***
 
@@ -451,7 +451,7 @@ Simple Plots
 Plotting can be complicated!
 
 ```{r, eval=FALSE}
-plot( x, y, xlab = "X axis", ylab = "Y lab", main = "You this is cool", cex = 2.0, pch = '*', col = "red" )
+plot( x, y, xlab = "X axis", ylab = "Y lab", main = "This is cool", cex = 2.0, pch = '*', col = "red" )
 ```
 
 Simple Plots
@@ -460,7 +460,7 @@ Simple Plots
 Plotting can be complicated!
 
 ```{r, echo=FALSE}
-plot( x, y, xlab = "X axis", ylab = "Y lab", main = "You this is cool", cex = 2.0, pch = '*', col = "red" )
+plot( x, y, xlab = "X axis", ylab = "Y lab", main = "This is cool", cex = 2.0, pch = '*', col = "red" )
 ```
 
 Simple Plots
@@ -503,7 +503,7 @@ Reading Tables
 - read.delim
 
 ```{r}
-new.df <- read.table( "super_fun.txt" )
+new.df <- read.table( "intro_r/super_fun.txt" )
 dim( new.df )
 head( new.df )
 ```
@@ -512,7 +512,7 @@ Reading Tables
 ========================================================
 
 ```{r}
-new.df <- read.table( "not_so_fun.txt" )
+new.df <- read.table( "intro_r/not_so_fun.txt" )
 dim( new.df )
 head( new.df )
 ```
@@ -553,9 +553,9 @@ Using People's Work
 =======================================================
 
 ```{r}
-? "dplyr"
+? dplyr
 library(dplyr)
-? "dplyr"
+? dplyr
 ```
 
 Getting Help

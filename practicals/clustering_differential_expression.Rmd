@@ -24,7 +24,7 @@ knitr::opts_chunk$set(tidy.opts=list(width.cutoff=80))
 
 ```{r}
 library(Seurat)
-library(dplr)
+library(dplyr)
 library(gdata)
 counts_matrix_filename = "shared_ro/pbmcs/pbmc3k.counts.matrix.gz"
 myCountDF <- read.table(gzfile(counts_matrix_filename), header=T, row.names=1)

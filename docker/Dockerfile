@@ -116,3 +116,4 @@ ADD supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 CMD ["/usr/bin/supervisord","-c","/etc/supervisor/conf.d/supervisord.conf"]
 RUN git clone https://github.com/broadinstitute/CEGS_single_cell_tx_workshop_Sept2017.git /home/training/sc_workshop
 RUN chown -R training /home/training/sc_workshop
+
